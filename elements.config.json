@@ -1,0 +1,20 @@
+[
+  {
+    "name": "SendButton",
+    "desc": "对话框发送按钮",
+    "selector": "#agent-chat-view > div.ai-agent-welcome-login.bottom > div > div > div.chat-input-wrapper > div > div.chat-input-v2-editor-part-wrapper > div > div.chat-input-v2-editor-part-lower-content > div.chat-input-v2-editor-part-lower__right > button.chat-input-v2-send-button > span",
+    "extraAttr": {
+      "class": "codicon-icube-ArrowUp"
+    }
+  },
+  {
+    "name": "SendButtonDisabled",
+    "desc": "对话框发送按钮 Disabled",
+    "selector": "#agent-chat-view > div.ai-agent-welcome-login.bottom > div > div > div.chat-input-wrapper > div > div.chat-input-v2-editor-part-wrapper > div > div.chat-input-v2-editor-part-lower-content > div.chat-input-v2-editor-part-lower__right > button.chat-input-v2-send-button.disabled"
+  },
+  {
+    "name": "MessageInput",
+    "desc": "对话框输入框",
+    "selector": "#agent-chat-view > div.ai-agent-welcome-login.bottom > div > div > div.chat-input-wrapper > div > div.chat-input-v2-editor-part-wrapper > div > div.chat-input-v2-input-box-wrapper.chat-input-v2-input-box--modern-scroll > div.chat-input-v2-input-box-editable"
+  }
+]

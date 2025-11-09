@@ -110,6 +110,13 @@ htmlcov/
 *.old
 .cache/
 
+# Test automation framework
+screenshots/
+test-results/
+test-reports/
+*.test.log
+elements.config.local.json
+
 # Package manager lock files (uncomment if you want to ignore them)
 # package-lock.json
 # yarn.lock
