@@ -2,7 +2,7 @@
   {
     "name": "SendButton",
     "desc": "对话框发送按钮",
-    "selector": "#agent-chat-view > div.ai-agent-welcome-login.bottom > div > div > div.chat-input-wrapper > div > div.chat-input-v2-editor-part-wrapper > div > div.chat-input-v2-editor-part-lower-content > div.chat-input-v2-editor-part-lower__right > button.chat-input-v2-send-button > span",
+    "selector": "#agent-chat-view > div > div > div.chat-input-and-todolist-wrapper > div.chat-input-wrapper > div > div.chat-input-v2-editor-part-wrapper > div > div.chat-input-v2-editor-part-lower-content > div.chat-input-v2-editor-part-lower__right > button.chat-input-v2-send-button > span",
     "extraAttr": {
       "class": "codicon-icube-ArrowUp"
     }
@@ -10,11 +10,36 @@
   {
     "name": "SendButtonDisabled",
     "desc": "对话框发送按钮 Disabled",
-    "selector": "#agent-chat-view > div.ai-agent-welcome-login.bottom > div > div > div.chat-input-wrapper > div > div.chat-input-v2-editor-part-wrapper > div > div.chat-input-v2-editor-part-lower-content > div.chat-input-v2-editor-part-lower__right > button.chat-input-v2-send-button.disabled"
+    "selector": "#agent-chat-view > div > div > div.chat-input-and-todolist-wrapper > div.chat-input-wrapper > div > div.chat-input-v2-editor-part-wrapper > div > div.chat-input-v2-editor-part-lower-content > div.chat-input-v2-editor-part-lower__right > button.chat-input-v2-send-button.disabled"
   },
   {
-    "name": "MessageInput",
-    "desc": "对话框输入框",
-    "selector": "#agent-chat-view > div.ai-agent-welcome-login.bottom > div > div > div.chat-input-wrapper > div > div.chat-input-v2-editor-part-wrapper > div > div.chat-input-v2-input-box-wrapper.chat-input-v2-input-box--modern-scroll > div.chat-input-v2-input-box-editable"
+    "name": "NewTaskMessageInput",
+    "desc": "新建任务对话框输入框",
+    "selector": "#agent-chat-view > div > div > div.chat-input-and-todolist-wrapper > div.chat-input-wrapper > div > div.chat-input-v2-editor-part-wrapper > div > div.chat-input-v2-input-box-wrapper.chat-input-v2-input-box--modern-scroll > div.chat-input-v2-input-box-editable"
+  },
+  {
+    "name": "NewChat",
+    "desc": "新建对话",
+    "selector": "#workbench\\.parts\\.titlebar > div > div.titlebar-right.titlebar-main-right > div.icube-right-auxiliary-actions-bar > div > div > ul > li.action-item.action-item-no-checked.menu-entry > a"
+  },
+  {
+    "name": "LatestAssistantBar",
+    "desc": "最后一条 Bot 消息操作栏",
+    "selector": "#mc-agent-content-container > div > div > div:nth-child(2) > section > div.latest-assistant-bar"
+  },
+  {
+    "name": "SwithToSoloButton",
+    "desc": "切换到 SOLO",
+    "selector": "body > div.fixed-titlebar-container > div > div > div > div.icube-mode-tab > div.icube-mode-tab-container > div.icube-mode-tab-item.icube-mode-tab-item-ide"
+  },
+  {
+    "name": "FirstBotAvatar",
+    "desc": "第一个 Bot 头像",
+    "selector": "#mc-agent-content-container > div > div > div:nth-child(2) > section > div.chat-turn-heading.assistant > div > div.icd-avatar-img.ai-avatar.spring > div"
+  },
+  {
+    "name": "ModeTabContainer",
+    "desc": "模式标签容器",
+    "selector": "body > div.fixed-titlebar-container > div > div > div > div.icube-mode-tab > div.icube-mode-tab-container"
   }
 ]
