@@ -1,138 +1,78 @@
-const { loadConfig, findElement, checkCDPPort, waitForPort, startApp } = require('../core/utils');
-const { connectToBrowser } = require('../core/browser');
-const {
-  waitForElement,
-  clickElement,
-  doubleClickElement,
-  fillInput,
-  conditionalClickByTransform
-} = require('../core/operations');
+const { loadConfig, loadTestCases } = require('../core/utils');
+const { executeTestCase, executeTestCases } = require('../core/test-case');
 
-// ==================== 主函数 ====================
-async function automateChat() {
+// ==================== 脚本执行函数 ====================
+
+/**
+ * 执行单个测试用例（使用默认配置）
+ */
+async function executeSingle() {
   const { config, elementsConfig } = loadConfig();
-  let browser = null;
   
-  try {
-    // 步骤 1: 检查端口
-    console.log(`步骤 1: 检查 ${config.cdp.port} 端口...`);
-    const portInUse = await checkCDPPort(config.cdp.port, config.cdp.checkTimeout);
-    
-    if (!portInUse) {
-      // 步骤 2: 启动应用
-      console.log(`步骤 2: ${config.cdp.port} 端口不可用，启动应用...`);
-      await startApp(config.app);
-      
-      // 步骤 3: 等待端口启动
-      console.log(`步骤 3: 等待 ${config.cdp.port} 端口启动...`);
-      const portReady = await waitForPort(
-        config.cdp.port, 
-        config.cdp.waitMaxTime, 
-        config.cdp.waitInterval
-      );
-      
-      if (!portReady) {
-        throw new Error(`等待超时：${config.cdp.port} 端口未能启动`);
-      }
-      console.log(`✓ ${config.cdp.port} 端口已启动`);
-    } else {
-      console.log(`✓ ${config.cdp.port} 端口已可用`);
-    }
-
-    // 连接到浏览器
-    const { browser: connectedBrowser, page } = await connectToBrowser(config.cdp.port);
-    browser = connectedBrowser;
-
-    // 步骤 4: 条件点击 SwithToSoloButton
-    console.log('步骤 4: 检查 ModeTabContainer 的 transform...');
-    const modeTabContainer = findElement(elementsConfig, 'ModeTabContainer');
-    const switchToSoloButton = findElement(elementsConfig, 'SwithToSoloButton');
-    await conditionalClickByTransform(
-      page,
-      modeTabContainer.selector,
-      switchToSoloButton.selector,
-      config.transform.checkValue,
-      'ModeTabContainer',
-      'SwithToSoloButton',
-      { timeout: config.timeouts.short, waitAfter: config.delays.stepInterval }
-    );
-
-    // 步骤 5: 点击 NewChat
-    console.log('步骤 5: 点击 NewChat...');
-    const newChat = findElement(elementsConfig, 'NewChat');
-    await clickElement(
-      page, 
-      newChat.selector, 
-      'NewChat',
-      { timeout: config.timeouts.default, waitAfter: config.delays.stepInterval }
-    );
-
-    // 步骤 6: 点击 NewTaskMessageInput
-    console.log('步骤 6: 点击 NewTaskMessageInput...');
-    const messageInput = findElement(elementsConfig, 'NewTaskMessageInput');
-    await clickElement(
-      page, 
-      messageInput.selector, 
-      'NewTaskMessageInput',
-      { timeout: config.timeouts.default, waitAfter: config.delays.stepInterval }
-    );
-
-    // 步骤 7: 输入文本
-    console.log('步骤 7: 输入文本...');
-    await fillInput(
-      page, 
-      messageInput.selector, 
-      config.input.defaultText,
-      'NewTaskMessageInput',
-      { timeout: config.timeouts.default, waitAfter: config.delays.stepInterval }
-    );
-
-    // 步骤 8: 点击 SendButton
-    console.log('步骤 8: 点击 SendButton...');
-    const sendButton = findElement(elementsConfig, 'SendButton');
-    await clickElement(
-      page, 
-      sendButton.selector, 
-      'SendButton',
-      { timeout: config.timeouts.default, waitAfter: config.delays.stepInterval }
-    );
-
-    // 步骤 9: 等待 LatestAssistantBar
-    console.log('步骤 9: 等待 LatestAssistantBar 出现...');
-    const latestAssistantBar = findElement(elementsConfig, 'LatestAssistantBar');
-    await waitForElement(
-      page, 
-      latestAssistantBar.selector, 
-      config.timeouts.long,
-      'LatestAssistantBar'
-    );
-    await page.waitForTimeout(config.delays.stepInterval);
-
-    // 步骤 10: 双击 FirstBotAvatar
-    console.log('步骤 10: 双击 FirstBotAvatar...');
-    const firstBotAvatar = findElement(elementsConfig, 'FirstBotAvatar');
-    await doubleClickElement(
-      page, 
-      firstBotAvatar.selector, 
-      'FirstBotAvatar',
-      { timeout: config.timeouts.default, waitAfter: config.delays.stepInterval }
-    );
-
-    console.log('✓ 所有步骤执行完成！');
-
-  } catch (error) {
-    console.error('✗ 操作失败:', error.message);
-    throw error;
-  } finally {
-    // 断开浏览器连接（不关闭浏览器），确保资源总是被释放
-    if (browser) {
-      await browser.close();
-    }
+  // 使用默认配置创建一个测试用例
+  const defaultTestCase = {
+    name: '默认用例',
+    workingDir: config.app.workingDir,
+    inputText: config.input.defaultText
+  };
+  
+  const result = await executeTestCase(defaultTestCase, config, elementsConfig);
+  
+  if (!result.success) {
+    throw new Error(result.error);
   }
 }
 
-// 运行脚本
-automateChat().catch(error => {
-  console.error('脚本执行失败:', error);
-  process.exit(1);
-});
+/**
+ * 批量执行测试用例
+ * @param {Object} options - 执行选项
+ */
+async function executeBatch(options = {}) {
+  const { config, elementsConfig } = loadConfig();
+  const testCases = loadTestCases(options.testCasesPath);
+  
+  if (testCases.length === 0) {
+    console.log('没有找到测试用例，使用默认配置执行单个用例');
+    await executeSingle();
+    return;
+  }
+  
+  // 合并配置中的默认选项
+  const executionOptions = {
+    concurrency: options.concurrency ?? config.execution?.concurrency ?? 2,
+    maxConcurrency: options.maxConcurrency ?? config.execution?.maxConcurrency ?? 5,
+    closeAppAfterFinish: options.closeAppAfterFinish ?? config.execution?.closeAppAfterFinish ?? true,
+    stopOnError: options.stopOnError ?? false,
+    logDir: options.logDir ?? config.logs?.dir,
+    botReplyTimeout: options.botReplyTimeout
+  };
+  
+  const results = await executeTestCases(testCases, config, elementsConfig, executionOptions);
+  
+  // 如果有失败的用例，退出码为 1
+  if (results.failed > 0) {
+    throw new Error(`执行失败: ${results.failed} 个用例失败`);
+  }
+}
+
+/**
+ * 脚本主执行函数（统一接口）
+ * @param {Object} options - 执行选项
+ */
+async function execute(options = {}) {
+  // 如果指定了 testCasesPath 或 batch，则批量执行
+  if (options.testCasesPath || options.batch) {
+    await executeBatch(options);
+  } else {
+    // 否则单个用例执行
+    await executeSingle();
+  }
+}
+
+// ==================== 模块导出 ====================
+
+module.exports = {
+  execute,
+  executeSingle,
+  executeBatch
+};

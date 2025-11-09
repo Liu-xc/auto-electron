@@ -79,14 +79,24 @@ async function checkTransform(page, selector, expectedValue, elementName) {
         transform.includes(`translateX(${expectedValue}px)`)) {
       matches = true;
     }
-    // 检查 matrix 格式
+    // 检查 matrix 格式（包括 matrix 和 matrix3d）
     else if (transform.startsWith('matrix')) {
-      const matrixMatch = transform.match(/matrix\(([^)]+)\)/);
+      // 匹配 matrix( 或 matrix3d(
+      const matrixMatch = transform.match(/matrix3?d?\(([^)]+)\)/);
       if (matrixMatch) {
         const values = matrixMatch[1].split(',').map(v => v.trim());
-        // matrix(a, b, c, d, tx, ty) - tx 是第五个参数
-        if (values.length >= 5 && parseFloat(values[4]) === expectedValue) {
-          matches = true;
+        const isMatrix3d = transform.startsWith('matrix3d');
+        
+        if (isMatrix3d) {
+          // matrix3d(a, b, c, d, e, f, g, h, i, j, k, l, tx, ty, tz, tw) - tx 是第 13 个参数（索引 12）
+          if (values.length >= 13 && parseFloat(values[12]) === expectedValue) {
+            matches = true;
+          }
+        } else {
+          // matrix(a, b, c, d, tx, ty) - tx 是第五个参数（索引 4）
+          if (values.length >= 5 && parseFloat(values[4]) === expectedValue) {
+            matches = true;
+          }
         }
       }
     }

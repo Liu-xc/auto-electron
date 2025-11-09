@@ -15,6 +15,35 @@ function loadConfig() {
   return { config, elementsConfig };
 }
 
+// ==================== 测试用例加载 ====================
+/**
+ * 加载测试用例
+ * @param {string} testCasesPath - 测试用例文件路径（可选，默认从 config/test-cases.json 加载）
+ * @returns {Array<Object>} 测试用例数组
+ */
+function loadTestCases(testCasesPath) {
+  const fs = require('fs');
+  const path = require('path');
+  
+  const defaultPath = path.join(__dirname, '../../config/test-cases.json');
+  const filePath = testCasesPath || defaultPath;
+  
+  if (!fs.existsSync(filePath)) {
+    console.warn(`警告: 测试用例文件不存在: ${filePath}`);
+    return [];
+  }
+  
+  const content = fs.readFileSync(filePath, 'utf-8');
+  const testCases = JSON.parse(content);
+  
+  // 确保返回数组
+  if (!Array.isArray(testCases)) {
+    throw new Error('测试用例文件格式错误：必须是数组格式');
+  }
+  
+  return testCases;
+}
+
 // ==================== 元素查找 ====================
 function findElement(elementsConfig, name) {
   const element = elementsConfig.find(e => e.name === name);
@@ -80,6 +109,7 @@ module.exports = {
   findElement,
   checkCDPPort,
   waitForPort,
-  startApp
+  startApp,
+  loadTestCases
 };
 

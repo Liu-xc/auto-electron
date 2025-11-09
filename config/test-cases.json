@@ -1,0 +1,27 @@
+[
+  {
+    "name": "用例1 - 默认目录",
+    "workingDir": "/Users/leo/Documents/clipboard-viewer",
+    "inputText": "测试消息 1"
+  },
+  {
+    "name": "用例2 - 不同目录",
+    "workingDir": "/Users/leo/Documents/another-project",
+    "inputText": "测试消息 2"
+  },
+  {
+    "name": "用例3 - 使用默认文本",
+    "workingDir": "/Users/leo/Documents/clipboard-viewer"
+  },
+  {
+    "name": "用例4 - 使用默认目录",
+    "inputText": "自定义输入文本"
+  },
+  {
+    "name": "用例5 - 自定义超时时间",
+    "workingDir": "/Users/leo/Documents/clipboard-viewer",
+    "inputText": "测试消息 5",
+    "botReplyTimeout": 240000
+  }
+]
+

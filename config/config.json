@@ -6,6 +6,7 @@
   },
   "cdp": {
     "port": 9222,
+    "maxPorts": 100,
     "checkTimeout": 2000,
     "waitMaxTime": 30000,
     "waitInterval": 1000
@@ -13,7 +14,7 @@
   "timeouts": {
     "default": 10000,
     "short": 5000,
-    "long": 30000
+    "long": 180000
   },
   "delays": {
     "stepInterval": 2000,
@@ -25,6 +26,14 @@
   },
   "input": {
     "defaultText": "hello world"
+  },
+  "logs": {
+    "dir": "logs"
+  },
+  "execution": {
+    "concurrency": 2,
+    "maxConcurrency": 5,
+    "closeAppAfterFinish": true
   }
 }
 
