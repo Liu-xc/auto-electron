@@ -1,7 +1,7 @@
 const { loadConfig, findElement } = require('./utils');
 const { connectToBrowser } = require('./browser');
 const { appManager } = require('./app-manager');
-const { readClipboardAndSave } = require('./clipboard');
+const { readClipboardAndSave, saveTaskLog } = require('./clipboard');
 const {
   waitForElement,
   clickElement,
@@ -45,6 +45,7 @@ async function executeTestCase(testCase, globalConfig, elementsConfig, options =
   };
   
   let browser = null;
+  const startTime = Date.now();
   
   try {
     console.log(`\n========== 开始执行: ${caseName} ==========`);
@@ -160,31 +161,51 @@ async function executeTestCase(testCase, globalConfig, elementsConfig, options =
       { timeout: globalConfig.timeouts.default, waitAfter: globalConfig.delays.stepInterval }
     );
 
-    // 步骤 11: 读取剪贴板并保存日志
-    console.log('步骤 11: 读取剪贴板并保存日志...');
+    // 步骤 11: 读取剪贴板内容
+    console.log('步骤 11: 读取剪贴板内容...');
     const clipboardResult = await readClipboardAndSave(caseName, logDir || globalConfig.logs?.dir);
+    let clipboardContent = null;
     let logFile = null;
     if (clipboardResult.success) {
+      clipboardContent = clipboardResult.content;
       logFile = clipboardResult.filepath;
-      console.log(`✓ 日志已保存: ${logFile}`);
+      console.log(`✓ 剪贴板内容已读取（长度: ${clipboardContent.length} 字符）`);
     } else {
       console.warn(`⚠ 读取剪贴板失败: ${clipboardResult.error}`);
     }
 
+    const endTime = Date.now();
     console.log(`✓ ${caseName} 执行完成！`);
     console.log(`========== 完成: ${caseName} ==========\n`);
     
     return { 
       success: true, 
-      caseName, 
-      logFile,
-      port 
+      caseName,
+      workingDir,
+      inputText,
+      clipboardContent,
+      logFile, // 保留旧的文件路径用于兼容
+      port,
+      startTime,
+      endTime,
+      duration: endTime - startTime
     };
 
   } catch (error) {
+    const endTime = Date.now();
     console.error(`✗ ${caseName} 执行失败:`, error.message);
     console.log(`========== 失败: ${caseName} ==========\n`);
-    return { success: false, error: error.message, caseName, port };
+    return { 
+      success: false, 
+      error: error.message, 
+      caseName,
+      workingDir,
+      inputText,
+      port,
+      startTime,
+      endTime,
+      duration: endTime - startTime
+    };
   } finally {
     // 断开浏览器连接（不关闭浏览器），确保资源总是被释放
     if (browser) {
@@ -225,6 +246,13 @@ async function executeTestCases(testCases, globalConfig, elementsConfig, options
   // 限制并发数量不超过最大值
   const actualConcurrency = Math.min(concurrency, maxConcurrency);
   
+  // 跟踪每个 workingDir 的执行 Promise，用于检测和等待相同目录的用例
+  const workingDirPromises = new Map(); // workingDir -> Promise
+  
+  // 任务开始时间
+  const taskStartTime = Date.now();
+  const taskId = `task-${taskStartTime}`;
+  
   const results = {
     total: testCases.length,
     success: 0,
@@ -246,23 +274,45 @@ async function executeTestCases(testCases, globalConfig, elementsConfig, options
     
     // 执行单个用例的包装函数
     const executeOne = async (testCase, index) => {
-      try {
-        const result = await executeTestCase(testCase, globalConfig, elementsConfig, {
-          closeAppAfterFinish,
-          logDir,
-          botReplyTimeout
-        });
-        return { index, result };
-      } catch (error) {
-        return { 
-          index, 
-          result: { 
-            success: false, 
-            error: error.message, 
-            caseName: testCase.name || `用例-${index}` 
-          } 
-        };
+      // 获取用例的 workingDir
+      const workingDir = testCase.workingDir || globalConfig.app.workingDir;
+      const caseName = testCase.name || `用例-${index}`;
+      
+      // 检查是否有相同的 workingDir 正在执行
+      if (workingDirPromises.has(workingDir)) {
+        console.log(`\n⚠ 检测到用例 "${caseName}" 的工作目录 "${workingDir}" 正在被其他用例使用，等待前置用例完成...`);
+        await workingDirPromises.get(workingDir);
+        console.log(`✓ 前置用例已完成，开始执行用例 "${caseName}"\n`);
       }
+      
+      // 创建当前用例的执行 Promise（立即执行）
+      const executePromise = (async () => {
+        try {
+          const result = await executeTestCase(testCase, globalConfig, elementsConfig, {
+            closeAppAfterFinish,
+            logDir,
+            botReplyTimeout
+          });
+          return { index, result };
+        } catch (error) {
+          return { 
+            index, 
+            result: { 
+              success: false, 
+              error: error.message, 
+              caseName 
+            } 
+          };
+        } finally {
+          // 用例完成后，清理 workingDir 记录
+          workingDirPromises.delete(workingDir);
+        }
+      })();
+      
+      // 立即记录当前用例的 Promise（这样后续相同 workingDir 的用例会等待这个 Promise）
+      workingDirPromises.set(workingDir, executePromise);
+      
+      return await executePromise;
     };
     
     // 启动初始批次
@@ -319,14 +369,37 @@ async function executeTestCases(testCases, globalConfig, elementsConfig, options
     await Promise.all(executing.map(p => p.promise));
     
   } else {
-    // 串行执行（原有逻辑）
+    // 串行执行
     for (let i = 0; i < testCases.length; i++) {
       const testCase = testCases[i];
-      const result = await executeTestCase(testCase, globalConfig, elementsConfig, {
-        closeAppAfterFinish,
-        logDir,
-        botReplyTimeout
-      });
+      const workingDir = testCase.workingDir || globalConfig.app.workingDir;
+      
+      // 检查是否有相同的 workingDir 正在执行（串行模式下通常不会有，但为了安全起见还是检查）
+      if (workingDirPromises.has(workingDir)) {
+        const caseName = testCase.name || `用例-${i}`;
+        console.log(`\n⚠ 检测到用例 "${caseName}" 的工作目录 "${workingDir}" 正在被其他用例使用，等待前置用例完成...`);
+        await workingDirPromises.get(workingDir);
+        console.log(`✓ 前置用例已完成，开始执行用例 "${caseName}"\n`);
+      }
+      
+      // 创建当前用例的执行 Promise
+      const executePromise = (async () => {
+        try {
+          return await executeTestCase(testCase, globalConfig, elementsConfig, {
+            closeAppAfterFinish,
+            logDir,
+            botReplyTimeout
+          });
+        } finally {
+          // 用例完成后，清理 workingDir 记录
+          workingDirPromises.delete(workingDir);
+        }
+      })();
+      
+      // 记录当前用例的 Promise
+      workingDirPromises.set(workingDir, executePromise);
+      
+      const result = await executePromise;
       
       results.details.push(result);
       if (result.success) {
@@ -347,13 +420,60 @@ async function executeTestCases(testCases, globalConfig, elementsConfig, options
     }
   }
   
+  // 任务结束时间
+  const taskEndTime = Date.now();
+  
+  // 构建任务日志对象
+  const taskLog = {
+    taskId,
+    startTime: taskStartTime,
+    endTime: taskEndTime,
+    duration: taskEndTime - taskStartTime,
+    total: results.total,
+    success: results.success,
+    failed: results.failed,
+    options: {
+      concurrency: actualConcurrency,
+      maxConcurrency,
+      stopOnError,
+      closeAppAfterFinish,
+      botReplyTimeout
+    },
+    testCases: results.details
+      .map((result, index) => {
+        // 如果 result 不存在（并发模式下可能的情况），跳过
+        if (!result) return null;
+        const testCase = testCases[index] || {};
+        return {
+          index,
+          name: result.caseName || testCase.name || `用例-${index}`,
+          workingDir: result.workingDir || testCase.workingDir || globalConfig.app.workingDir,
+          inputText: result.inputText || testCase.inputText || globalConfig.input.defaultText,
+          success: result.success,
+          error: result.error || null,
+          clipboardContent: result.clipboardContent || null,
+          port: result.port || null,
+          startTime: result.startTime || null,
+          endTime: result.endTime || null,
+          duration: result.duration || null,
+          logFile: result.logFile || null // 保留旧的文件路径用于兼容
+        };
+      })
+      .filter(item => item !== null) // 过滤掉 null 值
+  };
+  
+  // 保存 JSON 格式的任务日志
+  const taskLogFile = saveTaskLog(taskLog, logDir || globalConfig.logs?.dir);
+  console.log(`\n✓ 任务日志已保存: ${taskLogFile}`);
+  
   // 打印统计信息
   console.log(`\n========== 批量执行完成 ==========`);
   console.log(`总计: ${results.total} 个用例`);
   console.log(`成功: ${results.success} 个`);
   console.log(`失败: ${results.failed} 个`);
+  console.log(`总耗时: ${((taskEndTime - taskStartTime) / 1000).toFixed(2)} 秒`);
   if (results.details.some(r => r.logFile)) {
-    console.log(`\n日志文件:`);
+    console.log(`\n单个用例日志文件:`);
     results.details.forEach(r => {
       if (r.logFile) {
         console.log(`  - ${r.caseName}: ${r.logFile}`);
@@ -362,7 +482,14 @@ async function executeTestCases(testCases, globalConfig, elementsConfig, options
   }
   console.log(`========== ========== ==========\n`);
   
-  return results;
+  return {
+    ...results,
+    taskLogFile,
+    taskId,
+    startTime: taskStartTime,
+    endTime: taskEndTime,
+    duration: taskEndTime - taskStartTime
+  };
 }
 
 module.exports = {

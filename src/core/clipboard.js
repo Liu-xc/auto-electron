@@ -92,9 +92,67 @@ async function readClipboardAndSave(caseName, logDir) {
   }
 }
 
+/**
+ * 保存任务级别的 JSON 日志
+ * @param {Object} taskLog - 任务日志对象
+ * @param {string} taskLog.taskId - 任务 ID（可选，默认使用时间戳）
+ * @param {number} taskLog.startTime - 任务开始时间（时间戳）
+ * @param {number} taskLog.endTime - 任务结束时间（时间戳）
+ * @param {number} taskLog.total - 总用例数
+ * @param {number} taskLog.success - 成功用例数
+ * @param {number} taskLog.failed - 失败用例数
+ * @param {Array} taskLog.testCases - 测试用例详情数组
+ * @param {Object} taskLog.options - 执行选项
+ * @param {string} logDir - 日志保存目录（可选）
+ * @returns {string} 保存的文件路径
+ */
+function saveTaskLog(taskLog, logDir) {
+  const fs = require('fs');
+  const path = require('path');
+  
+  // 项目根目录（src/core 的上级目录的上级目录）
+  const projectRoot = path.join(__dirname, '../..');
+  
+  // 如果没有指定日志目录，使用默认目录
+  const defaultLogDir = path.join(projectRoot, 'logs');
+  let targetLogDir;
+  
+  if (!logDir) {
+    // 使用默认目录
+    targetLogDir = defaultLogDir;
+  } else if (path.isAbsolute(logDir)) {
+    // 如果是绝对路径，直接使用
+    targetLogDir = logDir;
+  } else {
+    // 如果是相对路径，解析为相对于项目根目录的路径
+    targetLogDir = path.join(projectRoot, logDir);
+  }
+  
+  // 确保日志目录存在
+  if (!fs.existsSync(targetLogDir)) {
+    fs.mkdirSync(targetLogDir, { recursive: true });
+  }
+  
+  // 生成文件名：任务ID + 时间戳
+  const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+  const taskId = taskLog.taskId || `task-${timestamp}`;
+  const sanitizedTaskId = taskId.replace(/[^a-zA-Z0-9-_]/g, '_');
+  const filename = `${sanitizedTaskId}_${timestamp}.json`;
+  const filepath = path.join(targetLogDir, filename);
+  
+  // 格式化 JSON（缩进 2 个空格）
+  const jsonContent = JSON.stringify(taskLog, null, 2);
+  
+  // 保存文件
+  fs.writeFileSync(filepath, jsonContent, 'utf-8');
+  
+  return filepath;
+}
+
 module.exports = {
   readClipboard,
   saveLog,
-  readClipboardAndSave
+  readClipboardAndSave,
+  saveTaskLog
 };
 

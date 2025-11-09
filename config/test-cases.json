@@ -5,8 +5,8 @@
     "inputText": "测试消息 1"
   },
   {
-    "name": "用例2 - 不同目录",
-    "workingDir": "/Users/leo/Documents/another-project",
+    "name": "用例2 - Express 项目",
+    "workingDir": "/Users/leo/Documents/codes/express",
     "inputText": "测试消息 2"
   },
   {
@@ -22,6 +22,16 @@
     "workingDir": "/Users/leo/Documents/clipboard-viewer",
     "inputText": "测试消息 5",
     "botReplyTimeout": 240000
+  },
+  {
+    "name": "用例6 - Try Vite 项目",
+    "workingDir": "/Users/leo/Documents/codes/try-vite",
+    "inputText": "测试 Vite 项目"
+  },
+  {
+    "name": "用例7 - Leo Playground 项目",
+    "workingDir": "/Users/leo/Documents/codes/leo-playground",
+    "inputText": "测试 Playground 项目"
   }
 ]
 

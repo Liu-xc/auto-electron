@@ -201,6 +201,35 @@ class AppInstanceManager {
   hasInstance(port) {
     return this.instances.has(port);
   }
+
+  /**
+   * 检查指定的 workingDir 是否正在被使用
+   * @param {string} workingDir - 工作目录路径
+   * @returns {boolean} 如果该 workingDir 正在被使用返回 true
+   */
+  isWorkingDirInUse(workingDir) {
+    for (const instance of this.instances.values()) {
+      if (instance.workingDir === workingDir) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  /**
+   * 获取使用指定 workingDir 的所有实例端口
+   * @param {string} workingDir - 工作目录路径
+   * @returns {Array<number>} 端口号数组
+   */
+  getPortsByWorkingDir(workingDir) {
+    const ports = [];
+    for (const [port, instance] of this.instances.entries()) {
+      if (instance.workingDir === workingDir) {
+        ports.push(port);
+      }
+    }
+    return ports;
+  }
 }
 
 // 导出单例
