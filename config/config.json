@@ -1,0 +1,30 @@
+{
+  "app": {
+    "path": "/Applications/Trae.app/Contents/MacOS/Electron",
+    "workingDir": "/Users/leo/Documents/clipboard-viewer",
+    "args": ["--remote-debugging-port=9222"]
+  },
+  "cdp": {
+    "port": 9222,
+    "checkTimeout": 2000,
+    "waitMaxTime": 30000,
+    "waitInterval": 1000
+  },
+  "timeouts": {
+    "default": 10000,
+    "short": 5000,
+    "long": 30000
+  },
+  "delays": {
+    "stepInterval": 2000,
+    "transformCheckDelay": 2000
+  },
+  "transform": {
+    "checkValue": -20,
+    "supportedFormats": ["translate", "translateX", "matrix"]
+  },
+  "input": {
+    "defaultText": "hello world"
+  }
+}
+

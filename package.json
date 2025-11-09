@@ -4,7 +4,7 @@
   "main": "click-element.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "automate": "node automate-chat.js"
+    "automate": "node src/scripts/automate-chat.js"
   },
   "keywords": [],
   "author": "",
