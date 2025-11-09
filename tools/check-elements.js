@@ -1,10 +1,14 @@
 const WebSocket = require('ws');
 const http = require('http');
+const { getCDPPort } = require('./utils');
 
 async function checkElements() {
+  const port = getCDPPort();
+  console.log(`使用 CDP 端口: ${port}`);
+  
   // Get targets
   const targets = await new Promise((resolve, reject) => {
-    http.get('http://localhost:9222/json', (res) => {
+    http.get(`http://localhost:${port}/json`, (res) => {
       let data = '';
       res.on('data', chunk => data += chunk);
       res.on('end', () => {

@@ -24,8 +24,7 @@ auto-electron/
 ├── tools/                 # 工具脚本目录
 │   ├── check-dom-structure.js
 │   ├── check-elements.js
-│   ├── click-element.js
-│   └── click-element.py
+│   └── click-element.js
 ├── package.json
 └── README.md
 ```
@@ -178,6 +177,34 @@ node src/run.js automate-chat --batch --concurrency 10 --max-concurrency 3
 ### 工具脚本 (`tools/`)
 
 用于调试和检查页面元素的辅助工具。
+
+工具脚本支持通过以下方式指定 CDP 端口（优先级从高到低）：
+
+1. **命令行参数**: `--port <port-number>`
+   ```bash
+   node tools/check-elements.js --port 9223
+   ```
+
+2. **环境变量**: `CDP_PORT`
+   ```bash
+   CDP_PORT=9223 node tools/check-elements.js
+   ```
+
+3. **配置文件**: 从 `config/config.json` 读取 `cdp.port`
+
+4. **默认值**: 9222
+
+**示例：**
+```bash
+# 使用配置文件中的端口（默认）
+node tools/check-elements.js
+
+# 使用命令行指定端口
+node tools/check-dom-structure.js --port 9223
+
+# 使用环境变量
+CDP_PORT=9224 node tools/click-element.js
+```
 
 ## 扩展开发
 

@@ -1,5 +1,5 @@
 const { spawn } = require('child_process');
-const { checkCDPPort, waitForPort } = require('./utils');
+const { checkCDPPort, waitForPort, loadConfig } = require('./utils');
 
 // ==================== 应用实例管理器 ====================
 
@@ -51,9 +51,11 @@ class AppInstanceManager {
   async startAppInstance(appConfig, port, options = {}) {
     const { waitMaxTime = 30000, waitInterval = 1000, maxPorts = 100 } = options;
     
-    // 如果端口未指定，则分配一个
+    // 如果端口未指定，则分配一个（从配置读取基础端口）
     if (!port) {
-      port = await this.allocatePort(9222, maxPorts);
+      const { config } = loadConfig();
+      const basePort = config.cdp.port || 9222;
+      port = await this.allocatePort(basePort, maxPorts);
     } else if (!this.portPool.has(port)) {
       // 如果端口已指定但未在池中，标记为已使用
       this.portPool.add(port);
